@@ -196,7 +196,8 @@ bool CheckMultiClassObjective(const std::string& objective) {
           || objective == std::string("softmax")
           || objective == std::string("multiclass_ova")
           || objective == std::string("ova")
-          || objective == std::string("ovr"));
+          || objective == std::string("ovr")
+          || objective == std::string("sbg"));
 }
 
 void Config::CheckParamConflict() {

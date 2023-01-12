@@ -4,6 +4,7 @@
 #include "rank_objective.hpp"
 #include "multiclass_objective.hpp"
 #include "xentropy_objective.hpp"
+#include "netflix_objective.hpp"
 
 namespace LightGBM {
 
@@ -40,6 +41,8 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
     return new RegressionGammaLoss(config);
   } else if (type == std::string("tweedie")) {
     return new RegressionTweedieLoss(config);
+  } else if (type == std::string("sbg")) {
+    return new sBGObjective(config);
   } else if (type == std::string("none") || type == std::string("null") || type == std::string("custom") || type == std::string("na")) {
     return nullptr;
   }
@@ -79,6 +82,8 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
     return new RegressionGammaLoss(strs);
   } else if (type == std::string("tweedie")) {
     return new RegressionTweedieLoss(strs);
+  } else if (type == std::string("sbg")) {
+    return new sBGObjective(strs);
   } else if (type == std::string("none") || type == std::string("null") || type == std::string("custom") || type == std::string("na")) {
     return nullptr;
   }

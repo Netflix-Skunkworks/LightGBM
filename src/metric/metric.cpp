@@ -5,6 +5,7 @@
 #include "map_metric.hpp"
 #include "multiclass_metric.hpp"
 #include "xentropy_metric.hpp"
+#include "netflix_metric.hpp"
 
 namespace LightGBM {
 
@@ -51,6 +52,8 @@ Metric* Metric::CreateMetric(const std::string& type, const Config& config) {
     return new GammaDevianceMetric(config);
   } else if (type == std::string("tweedie")) {
     return new TweedieMetric(config);
+  } else if (type == std::string("sbg")) {
+    return new sBGMetric(config);
   }
   return nullptr;
 }

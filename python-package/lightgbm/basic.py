@@ -179,6 +179,7 @@ C_API_PREDICT_CONTRIB = 3
 """Data type of data field"""
 FIELD_TYPE_MAPPER = {"label": C_API_DTYPE_FLOAT32,
                      "weight": C_API_DTYPE_FLOAT32,
+                     "weight2": C_API_DTYPE_FLOAT32,
                      "init_score": C_API_DTYPE_FLOAT64,
                      "group": C_API_DTYPE_INT32}
 
@@ -679,6 +680,7 @@ class Dataset(object):
         self.label = label
         self.reference = reference
         self.weight = weight
+        self.weight2 = None
         self.group = group
         self.init_score = init_score
         self.silent = silent
@@ -704,7 +706,7 @@ class Dataset(object):
         return self
 
     def _lazy_init(self, data, label=None, reference=None,
-                   weight=None, group=None, init_score=None, predictor=None,
+                   weight=None, weight2=None, group=None, init_score=None, predictor=None,
                    silent=False, feature_name='auto',
                    categorical_feature='auto', params=None):
         if data is None:
@@ -793,6 +795,8 @@ class Dataset(object):
             raise ValueError("Label should not be None")
         if weight is not None:
             self.set_weight(weight)
+        if weight2 is not None:
+            self.set_weight2(weight2)
         if group is not None:
             self.set_group(group)
         # load init score
@@ -955,7 +959,7 @@ class Dataset(object):
                 if self.used_indices is None:
                     # create valid
                     self._lazy_init(self.data, label=self.label, reference=self.reference,
-                                    weight=self.weight, group=self.group,
+                                    weight=self.weight, weight2=self.weight2, group=self.group,
                                     init_score=self.init_score, predictor=self._predictor,
                                     silent=self.silent, feature_name=self.feature_name, params=self.params)
                 else:
@@ -981,7 +985,7 @@ class Dataset(object):
             else:
                 # create train
                 self._lazy_init(self.data, label=self.label,
-                                weight=self.weight, group=self.group,
+                                weight=self.weight, weight2=self.weight2, group=self.group,
                                 init_score=self.init_score, predictor=self._predictor,
                                 silent=self.silent, feature_name=self.feature_name,
                                 categorical_feature=self.categorical_feature, params=self.params)
@@ -1299,6 +1303,31 @@ class Dataset(object):
         if self.handle is not None and weight is not None:
             weight = list_to_1d_numpy(weight, name='weight')
             self.set_field('weight', weight)
+        return self
+
+    def set_weight2(self, weight2):
+        """Set weight2 of each instance.
+        This additional weight can be used to do weighted MLE
+        against a survival loss for example, which necessitates
+        an extra scalar per label (is_censored) - so one would
+        both use weight and weight2 in these instances.
+
+        Parameters
+        ----------
+        weight : list, numpy 1-D array, pandas Series or None
+            Weight to be set for each data point.
+
+        Returns
+        -------
+        self : Dataset
+            Dataset with set weight.
+        """
+        if weight2 is not None and np.all(weight2 == 1):
+            weight2 = None
+        self.weight2 = weight2
+        if self.handle is not None and weight2 is not None:
+            weight2 = list_to_1d_numpy(weight2, name='weight2')
+            self.set_field('weight2', weight2)
         return self
 
     def set_init_score(self, init_score):
@@ -2387,7 +2416,7 @@ class Booster(object):
                 self.__name_inner_eval = \
                     [string_buffers[i].value.decode() for i in range_(self.__num_inner_eval)]
                 self.__higher_better_inner_eval = \
-                    [name.startswith(('auc', 'ndcg@', 'map@')) for name in self.__name_inner_eval]
+                    [name.startswith(('auc', 'ndcg@', 'map@', 'sbg')) for name in self.__name_inner_eval]
 
     def attr(self, key):
         """Get attribute string from the Booster.

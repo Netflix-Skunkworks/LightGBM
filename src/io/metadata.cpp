@@ -340,6 +340,24 @@ void Metadata::SetWeights(const label_t* weights, data_size_t len) {
   weight_load_from_file_ = false;
 }
 
+void Metadata::SetWeights2(const label_t* weights, data_size_t len) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  // save to nullptr
+  if (weights == nullptr || len == 0) {
+    weights2_.clear();
+    return;
+  }
+  if (num_data_ != len) {
+    Log::Fatal("Length of weights is not same with #data");
+  }
+  if (!weights2_.empty()) { weights2_.clear(); }
+  weights2_ = std::vector<label_t>(num_data_);
+#pragma omp parallel for schedule(static)
+  for (data_size_t i = 0; i < num_data_; ++i) {
+    weights2_[i] = weights[i];
+  }
+}
+
 void Metadata::SetQuery(const data_size_t* query, data_size_t len) {
   std::lock_guard<std::mutex> lock(mutex_);
   // save to nullptr
